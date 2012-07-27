@@ -12,29 +12,30 @@ var clientList = [];
 var pilotList = [];
 
 /* Sock server new connection listener */
-sjsMirrorServer.on('connection', function(sjsServerInstance) {
+sjsMirrorServer.on('connection', function(sjsConnectionInstance) {
 	/* Add client to stack */
-	clientList.push(sjsServerInstance);
+	clientList.push(sjsConnectionInstance);
+        broadcastMessageToPilots(sjsConnectionInstance.id + ' connected.');
 
 	/* Client data listener */
-	sjsServerInstance.on('data', function(message) {
+	sjsConnectionInstance.on('data', function(message) {
 		var response = false;
 		switch (message) {
 		/* Auth as pilot */
 		/* TODO: Implement an auth strategy */
 		case "/auth":
 			/* Add client to pilot stack */
-			pilotList.push(sjsServerInstance);
+			pilotList.push(sjsConnectionInstance);
 			/* Remove from client stack */
 			var tempClientList = [];
-			for (cconn in clientList) {
-				if (clientList[ccon].id != sjsServerInstance.id) {
+			for (var ccon in clientList) {
+				if (clientList[ccon].id != sjsConnectionInstance.id) {
 					tempClientList.push(clientList[ccon]);
 				}
 			}
 			clientList = tempClientList;
 			/* Announce change to pilots */
-			broadcastMessageToPilots(sjsServerInstance.id + ' logged in.');
+			broadcastMessageToPilots(sjsConnectionInstance.id + ' logged in.');
 			response = false;
 			break;
 		default:
@@ -52,7 +53,7 @@ sjsMirrorServer.on('connection', function(sjsServerInstance) {
 });
 
 /* Server for static files */
-var static_directory = new node_static.Server(__dirname);
+var static_directory = new node_static.Server(__dirname + '/../static/');
 
 /* HTTP setup */
 var server = http.createServer();
@@ -66,7 +67,7 @@ server.addListener('upgrade', function(req,res){
 /* Sock server handler */
 sjsMirrorServer.installHandlers(server, {prefix:'/mirror'});
 
-console.log(' [*] Listening on 0.0.0.0:9999' );
+console.log('[*] Listening on 0.0.0.0:9999' );
 /* Start listening */
 server.listen(9999, '0.0.0.0');
 
